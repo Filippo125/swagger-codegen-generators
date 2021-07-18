@@ -1,12 +1,54 @@
 {{>partial_header}}
 package {{packageName}}
 
-{{#operations}}
-import (
-	"net/http"
-){{#operation}}
 
-func {{nickname}}(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+import (
+    log "github.com/sirupsen/logrus"
+	"net/http"
+    "encoding/json"
+    "strconv"
+)
+{{#operations}}
+type {{classname}} interface {
+    {{#operation}}
+        {{#contents}}
+        {{operationId}}({{#parameters}}{{>queryParams}}{{>pathParams}}{{>headerParams}}{{>bodyParams}}{{>formParams}}{{>cookieParams}}{{#hasMore}},{{/hasMore}}{{/parameters}}) (int, map[string]string,interface{})
+        {{/contents}}
+    {{/operation}}
+}
+{{/operations}}
+
+{{#operations}}
+{{#operation}}
+
+func {{operationId}}Handler(p {{classname}})  http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        var b []byte
+        var err error
+        {{#contents}}
+        {{#parameters}}
+        var {{paramName}} {{dataType}}
+        {{/parameters}}
+        {{>requestHeaderParams this}}
+        {{>requestQueryParams this}}
+        {{>requestBodyParams this}}
+        {{/contents}}
+        statusCode, headers, response := p.{{operationId}}({{#contents}}{{#parameters}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/parameters}}{{/contents}})
+        if b, err = json.Marshal(response); err != nil {
+            log.Errorf(err.Error())
+            w.WriteHeader(http.StatusInternalServerError)
+            return
+        }
+        if _, err = w.Write(b); err != nil {
+            log.Errorf(err.Error())
+            w.WriteHeader(http.StatusInternalServerError)
+            return
+        }
+
+        w.WriteHeader(statusCode)
+        w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+        for key, value := range headers {
+            w.Header().Set(key, value)
+        }
+    }
 }{{/operation}}{{/operations}}

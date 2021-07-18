@@ -1,0 +1,9 @@
+{{#parameters}}
+{{#isBodyParam}}
+bodyErr := json.NewDecoder(r.Body).Decode(&{{paramName}})
+if bodyErr != nil {
+    http.Error(w, bodyErr.Error(), http.StatusBadRequest)
+    return
+}
+{{/isBodyParam}}
+{{/parameters}}
