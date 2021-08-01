@@ -3,10 +3,8 @@ package main
 
 import (
 	"net/http"
-{{#imports}}
-    "{{this}}"
-{{/imports}}
-    {{swaggerPackage}}
+    "log"
+    sw "{{packageName}}/{{packageName}}"
 )
 var (
 {{#classNames}}
