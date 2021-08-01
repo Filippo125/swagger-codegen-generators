@@ -2,23 +2,23 @@
 package main
 
 import (
-    log "github.com/sirupsen/logrus"
 	"net/http"
-
-	// WARNING!
-	// Change this to a fully-qualified import path
-	// once you place this file into your project.
-	// For example,
-	//
-	//    sw "github.com/myname/myrepo/{{apiPath}}"
-	//
-	sw "./{{apiPath}}"
+{{#imports}}
+    "{{this}}"
+{{/imports}}
+    {{swaggerPackage}}
 )
+var (
+{{#classNames}}
+     emptyImp{{this}}  sw.Imp{{this}}
+{{/classNames}}
+)
+
 
 func main() {
 	log.Printf("Server started")
 
-	router := sw.NewRouter()
+router := sw.NewRouter({{#classNames}}emptyImp{{this}}{{#hasMore}},{{/hasMore}}{{/classNames}})
 
 	log.Fatal(http.ListenAndServe(":{{serverPort}}", router))
 }

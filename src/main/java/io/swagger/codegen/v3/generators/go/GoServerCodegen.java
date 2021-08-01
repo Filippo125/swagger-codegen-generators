@@ -1,28 +1,39 @@
 package io.swagger.codegen.v3.generators.go;
 
+import io.swagger.codegen.v3.CliOption;
 import io.swagger.codegen.v3.CodegenConstants;
-import io.swagger.codegen.v3.CodegenProperty;
+import io.swagger.codegen.v3.CodegenContent;
+import io.swagger.codegen.v3.CodegenModel;
+import io.swagger.codegen.v3.CodegenModelFactory;
+import io.swagger.codegen.v3.CodegenModelType;
+import io.swagger.codegen.v3.CodegenOperation;
+import io.swagger.codegen.v3.CodegenParameter;
 import io.swagger.codegen.v3.CodegenType;
 import io.swagger.codegen.v3.SupportingFile;
-import io.swagger.v3.oas.models.media.ArraySchema;
-import io.swagger.v3.oas.models.media.MapSchema;
 import io.swagger.v3.oas.models.media.Schema;
-
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
-
-import org.apache.commons.lang3.StringUtils;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
 
 public class GoServerCodegen extends AbstractGoCodegen {
+    public static final String USE_LOGRUS = "useLogrus";
+    public static final String MAIN_APPLICATION_FOLDER = "mainApplicationFolder";
 
     protected String apiVersion = "1.0.0";
     protected int serverPort = 8080;
     protected String projectName = "swagger-server";
     protected String apiPath = "go";
+    protected String mainFolder = "application";
+    protected TreeSet<String> classNamesDict = new TreeSet<>();
+    protected List<Map<String,String>> commonImports = new ArrayList<>();
 
     public GoServerCodegen() {
         super();
-
+        CodegenModelFactory.setTypeMapping(CodegenModelType.OPERATION,GoCodegenOperation.class);
+        CodegenModelFactory.setTypeMapping(CodegenModelType.PARAMETER,GoCodegenParameter.class);
         // set the output folder here
         outputFolder = "generated-code/go";
 
@@ -45,6 +56,10 @@ public class GoServerCodegen extends AbstractGoCodegen {
                 "controller-api.mustache",   // the template to use
                 ".go");       // the extension for each file to write
 
+        apiTemplateFiles.put(
+            "controller.mustache",   // the template to use
+            "Controller.go");       // the extension for each file to write
+
         /*
          * Reserved words.  Override this with reserved words specific to your language
          */
@@ -62,6 +77,19 @@ public class GoServerCodegen extends AbstractGoCodegen {
                 "continue", "for", "import", "return", "var", "error", "nil")
                 // Added "error" as it's used so frequently that it may as well be a keyword
         );
+
+        additionalProperties.put("classNames",this.classNamesDict);
+        cliOptions.add(CliOption.newBoolean(USE_LOGRUS, "Use sirupsen logrus library for logging instead of built-in library"));
+        cliOptions.add(CliOption.newString(MAIN_APPLICATION_FOLDER, "Use to customize the main application folder"));
+        modelPackage = packageName; //"models";
+        apiPackage = packageName;
+    }
+
+    @Override
+    public CodegenModel fromModel(String name, Schema schema, Map<String, Schema> allDefinitions) {
+        CodegenModel codegenModel = super.fromModel(name,schema,allDefinitions);
+        //addClassNames(codegenModel);
+        return codegenModel;
     }
 
     @Override
@@ -80,6 +108,16 @@ public class GoServerCodegen extends AbstractGoCodegen {
             setPackageName("swagger");
         }
 
+        if (additionalProperties.containsKey(USE_LOGRUS)) {
+            commonImports.add(createMapping("import","log \"github.com/sirupsen/logrus\""));
+        } else {
+            commonImports.add(createMapping("import","log"));
+        }
+
+        if (additionalProperties.containsKey(MAIN_APPLICATION_FOLDER)) {
+            mainFolder = (String) additionalProperties.get(MAIN_APPLICATION_FOLDER);
+        }
+
         /*
          * Additional Properties.  These values can be passed to the templates and
          * are available in models, apis, and supporting files
@@ -88,9 +126,9 @@ public class GoServerCodegen extends AbstractGoCodegen {
         additionalProperties.put("serverPort", serverPort);
         additionalProperties.put("apiPath", apiPath);
         additionalProperties.put(CodegenConstants.PACKAGE_NAME, packageName);
+        //additionalProperties.put("swaggerPackage", "sw "+'"'+ packageName + "/" + packageName + '"');
+        //additionalProperties.put("commonImports", commonImports);
 
-        modelPackage = packageName;
-        apiPackage = packageName;
 
         /*
          * Supporting Files.  You can write single files for the generator with the
@@ -99,9 +137,10 @@ public class GoServerCodegen extends AbstractGoCodegen {
          */
         supportingFiles.add(new SupportingFile("swagger.mustache", "api", "swagger.yaml"));
         supportingFiles.add(new SupportingFile("Dockerfile", "", "Dockerfile"));
-        supportingFiles.add(new SupportingFile("main.mustache", "", "main.go"));
-        supportingFiles.add(new SupportingFile("routers.mustache", apiPath, "routers.go"));
-        supportingFiles.add(new SupportingFile("logger.mustache", apiPath, "logger.go"));
+        supportingFiles.add(new SupportingFile("main.mustache", mainFileFolder(), "main.go"));
+        supportingFiles.add(new SupportingFile("routers.mustache", swaggerFileFolder(), "routers.go"));
+        supportingFiles.add(new SupportingFile("logger.mustache", swaggerFileFolder(), "logger.go"));
+        supportingFiles.add(new SupportingFile("goMod.mustache", apiPath, "go.mod"));
         writeOptional(outputFolder, new SupportingFile("README.mustache", apiPath, "README.md"));
     }
 
@@ -121,6 +160,11 @@ public class GoServerCodegen extends AbstractGoCodegen {
         return CodegenType.SERVER;
     }
 
+    @Override
+    protected void addAdditionPropertiesToCodeGenModel(CodegenModel codegenModel, Schema schema) {
+        super.addAdditionPropertiesToCodeGenModel(codegenModel, schema);
+        addVars(codegenModel, schema.getProperties(), schema.getRequired());
+    }
     /**
      * Configures a friendly name for the generator.  This will be used by the generator
      * to select the library with the -l flag.
@@ -150,11 +194,77 @@ public class GoServerCodegen extends AbstractGoCodegen {
      */
     @Override
     public String apiFileFolder() {
-        return outputFolder + File.separator + apiPackage().replace('.', File.separatorChar);
+        // to separate models in a specific package add it, but there is a template to be changed
+        //  +   File.separator + packageName;
+        return basePackageFileFolder() + File.separator + packageName;
     }
 
     @Override
     public String modelFileFolder() {
+        // to separate models in a specific package add it, but there is a template to be changed
+        // +  File.separator + modelPackage;
+        return basePackageFileFolder() + File.separator + packageName;
+    }
+
+    public String mainFileFolder() {
+        return baseSupportFileFolder() + File.separator + "cmd" + File.separator + mainFolder;
+    }
+
+    public String swaggerFileFolder() {
+        return baseSupportFileFolder() + File.separator + packageName;
+    }
+
+
+    private String baseSupportFileFolder() {
+        return apiPackage().replace('.', File.separatorChar);
+    }
+
+    private String basePackageFileFolder() {
         return outputFolder + File.separator + apiPackage().replace('.', File.separatorChar);
+    }
+
+    @Override
+    public Map<String, Object> postProcessOperations(Map<String, Object> objs) {
+        super.postProcessOperations(objs);
+        Map<String, Object> objectMap = (Map<String, Object>) objs.get("operations");
+        Object className = objectMap.get("classname");
+        if (className != null){
+            addClassNames(className.toString());
+        }
+        List<Map<String, String>> imports = (List<Map<String, String>>) objs.get("imports");
+        if (imports != null) {
+            imports.clear();
+            imports.addAll(commonImports);
+
+            List<CodegenOperation> operations = (List<CodegenOperation>) objectMap.get("operation");
+            boolean addedStrConvImport = false;
+            boolean addedMuxImport = false;
+            for (CodegenOperation operation : operations) {
+                for (CodegenContent codegenContent : operation.getContents()) {
+                    for (CodegenParameter param : codegenContent.getParameters()) {
+                        // import "os" if the operation uses files
+                        if (!addedStrConvImport &&
+                            (param.dataType.equals("int32") || param.dataType.equals("int64")
+                                || param.dataType.equals("float32") || param.dataType.equals("float64")
+                                || param.dataType.equals("bool")
+                            ))
+                        {
+                            imports.add(createMapping("import", "strconv"));
+                            addedStrConvImport = true;
+                        }
+                        if (!addedMuxImport && param.getIsPathParam()){
+                            imports.add(createMapping("import","github.com/gorilla/mux"));
+                            addedMuxImport = true;
+                        }
+                    }
+                }
+            }
+        }
+        return objs;
+    }
+
+
+    private void addClassNames(String classname) {
+        this.classNamesDict.add(classname);
     }
 }

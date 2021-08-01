@@ -1,5 +1,5 @@
 {{>partial_header}}
-package {{packageName}}
+package {{apiPackage}}
 {{#models}}{{#imports}}
 import ({{/imports}}{{#imports}}
 	"{{import}}"{{/imports}}{{#imports}}
@@ -25,7 +25,7 @@ type {{classname}} struct {
 {{^isComposedModel}}
 {{#vars}}{{#description}}
 	// {{{description}}}{{/description}}
-	{{name}} {{^isEnum}}{{^isPrimitiveType}}{{^isContainer}}{{^isDateTime}}*{{/isDateTime}}{{/isContainer}}{{/isPrimitiveType}}{{/isEnum}}{{{datatype}}} `json:"{{baseName}}{{^required}},omitempty{{/required}}"`
+{{name}} {{^required}}*{{/required}}{{#required}}{{^isEnum}}{{^isPrimitiveType}}{{^isContainer}}{{^isDateTime}}*{{/isDateTime}}{{/isContainer}}{{/isPrimitiveType}}{{/isEnum}}{{/required}}{{{datatype}}} `json:"{{baseName}}{{^required}},omitempty{{/required}}"`
 {{/vars}}
 {{/isComposedModel}}
 }{{/isEnum}}{{/model}}{{/models}}

@@ -18,8 +18,28 @@ type Route struct {
 
 type Routes []Route
 
-func NewRouter() *mux.Router {
+
+func Index(w http.ResponseWriter, r *http.Request) {
+fmt.Fprintf(w, "Hello World!")
+}
+
+func NewRouter({{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}{{#hasMore}}imp{{classname}} {{classname}}, {{/hasMore}}{{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
+    var routes = Routes{
+    Route{
+    "Index",
+    "GET",
+    "{{{basePathWithoutHost}}}/",
+    Index,
+    },{{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}
+
+        Route{
+        "{{operationId}}",
+        strings.ToUpper("{{httpMethod}}"),
+        "{{{basePathWithoutHost}}}{{{path}}}",
+        {{operationId}}Handler(imp{{classname}}),
+        },{{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}
+    }
 	for _, route := range routes {
 		var handler http.Handler
 		handler = route.HandlerFunc
@@ -35,28 +55,5 @@ func NewRouter() *mux.Router {
 	return router
 }
 
-func Index(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello World!")
-}
 
-// replace with your implementation
-{{#classNames}}
-var imp{{this}} {{this}}
-{{/classNames}}
-// end replace
 
-var routes = Routes{
-	Route{
-		"Index",
-		"GET",
-		"{{{basePathWithoutHost}}}/",
-		Index,
-	},{{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}
-
-	Route{
-		"{{operationId}}",
-		strings.ToUpper("{{httpMethod}}"),
-		"{{{basePathWithoutHost}}}{{{path}}}",
-		{{operationId}}Handler(imp{{classname}}),
-	},{{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}
-}

@@ -1,0 +1,45 @@
+{{#hasPathParams}}
+pathParams := mux.Vars(r)
+{{#parameters}}
+{{#isPathParam}}
+{{#isString}}
+{{paramName}} = pathParams["{{paramName}}"]
+{{/isString}}
+{{#isFloat32}}
+    if {{paramName}}, err = strconv.ParseFloat(pathParams["{{paramName}}"], 32); err != nil {
+    log.Errorf(err.Error())
+    w.WriteHeader(http.StatusBadRequest)
+    return
+    }
+{{/isFloat32}}
+{{#isFloat64}}
+if {{paramName}}, err = strconv.ParseFloat(pathParams["{{paramName}}"], 64); err != nil {
+    log.Errorf(err.Error())
+    w.WriteHeader(http.StatusBadRequest)
+    return
+}
+{{/isFloat64}}
+{{#isInt32}}
+    if {{paramName}}, err = strconv.ParseInt(pathParams["{{paramName}}"], 10, 32); err != nil {
+    log.Errorf(err.Error())
+    w.WriteHeader(http.StatusBadRequest)
+    return
+    }
+{{/isInt32}}
+{{#isInt64}}
+    if {{paramName}}, err = strconv.ParseInt(pathParams["{{paramName}}"], 10, 64); err != nil {
+    log.Errorf(err.Error())
+    w.WriteHeader(http.StatusBadRequest)
+    return
+}
+{{/isInt64}}
+{{#isBoolean}}
+    if {{paramName}}, err = strconv.ParseBool(pathParams["{{paramName}}"], 10, 64); err != nil {
+    log.Errorf(err.Error())
+    w.WriteHeader(http.StatusBadRequest)
+    return
+}
+{{/isBoolean}}
+{{/isPathParam}}
+{{/parameters}}
+{{/hasPathParams}}

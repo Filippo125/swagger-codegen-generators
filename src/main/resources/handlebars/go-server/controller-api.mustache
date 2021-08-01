@@ -1,13 +1,17 @@
 {{>partial_header}}
-package {{packageName}}
-
+package {{apiPackage}}
 
 import (
-    log "github.com/sirupsen/logrus"
-	"net/http"
+    "net/http"
     "encoding/json"
-    "strconv"
-)
+{{#hasPathParams}}
+    "github.com/gorilla/mux"
+{{/hasPathParams}}
+{{#imports}}
+    "{{import}}"
+{{/imports}}
+    )
+
 {{#operations}}
 type {{classname}} interface {
     {{#operation}}
@@ -30,25 +34,28 @@ func {{operationId}}Handler(p {{classname}})  http.HandlerFunc {
         var {{paramName}} {{dataType}}
         {{/parameters}}
         {{>requestHeaderParams this}}
+        {{>requestPathParams this}}
         {{>requestQueryParams this}}
         {{>requestBodyParams this}}
         {{/contents}}
         statusCode, headers, response := p.{{operationId}}({{#contents}}{{#parameters}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/parameters}}{{/contents}})
-        if b, err = json.Marshal(response); err != nil {
-            log.Errorf(err.Error())
-            w.WriteHeader(http.StatusInternalServerError)
-            return
-        }
-        if _, err = w.Write(b); err != nil {
-            log.Errorf(err.Error())
-            w.WriteHeader(http.StatusInternalServerError)
-            return
-        }
-
         w.WriteHeader(statusCode)
         w.Header().Set("Content-Type", "application/json; charset=UTF-8")
         for key, value := range headers {
             w.Header().Set(key, value)
+        }
+
+        if b, err = json.Marshal(response); err != nil {
+            {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
+            {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
+            w.WriteHeader(http.StatusInternalServerError)
+            return
+        }
+        if _, err = w.Write(b); err != nil {
+            {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
+            {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
+            w.WriteHeader(http.StatusInternalServerError)
+            return
         }
     }
 }{{/operation}}{{/operations}}
