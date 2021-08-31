@@ -16,7 +16,7 @@ var (
 func main() {
 	log.Printf("Server started")
 
-router := sw.NewRouter({{#classNames}}emptyImp{{this}}{{#hasMore}},{{/hasMore}}{{/classNames}})
+router := sw.NewRouter({{#classNames}}emptyImp{{this}}, {{/classNames}})
 
 	log.Fatal(http.ListenAndServe(":{{serverPort}}", router))
 }

@@ -79,7 +79,7 @@ public class GoServerCodegen extends AbstractGoCodegen {
         );
 
         additionalProperties.put("classNames",this.classNamesDict);
-        cliOptions.add(CliOption.newBoolean(USE_LOGRUS, "Use sirupsen logrus library for logging instead of built-in library"));
+        cliOptions.add(CliOption.newBoolean(USE_LOGRUS, "Use sirupsen logrus library for logging instead of built-in library").defaultValue("false"));
         cliOptions.add(CliOption.newString(MAIN_APPLICATION_FOLDER, "Use to customize the main application folder"));
         modelPackage = packageName; //"models";
         apiPackage = packageName;
@@ -100,16 +100,15 @@ public class GoServerCodegen extends AbstractGoCodegen {
     @Override
     public void processOpts() {
         super.processOpts();
-
         if (additionalProperties.containsKey(CodegenConstants.PACKAGE_NAME)) {
             setPackageName((String) additionalProperties.get(CodegenConstants.PACKAGE_NAME));
         }
         else {
             setPackageName("swagger");
         }
-
-        if (additionalProperties.containsKey(USE_LOGRUS)) {
-            commonImports.add(createMapping("import","log \"github.com/sirupsen/logrus\""));
+        boolean useLogrus = Boolean.parseBoolean((String)additionalProperties.get(USE_LOGRUS));
+        if (useLogrus) {
+            commonImports.add(createMapping("import","log  \"github.com/sirupsen/logrus\""));
         } else {
             commonImports.add(createMapping("import","log"));
         }
@@ -127,7 +126,7 @@ public class GoServerCodegen extends AbstractGoCodegen {
         additionalProperties.put("apiPath", apiPath);
         additionalProperties.put(CodegenConstants.PACKAGE_NAME, packageName);
         //additionalProperties.put("swaggerPackage", "sw "+'"'+ packageName + "/" + packageName + '"');
-        //additionalProperties.put("commonImports", commonImports);
+        additionalProperties.put("commonImports", commonImports);
 
 
         /*
@@ -266,5 +265,14 @@ public class GoServerCodegen extends AbstractGoCodegen {
 
     private void addClassNames(String classname) {
         this.classNamesDict.add(classname);
+    }
+
+    // check if import has a package rename, if not add ""
+    public Map<String, String> createMapping(String key, String value) {
+        String xValue = value;
+        if (!value.contains(" ")){
+            xValue = '"' + value + '"';
+        }
+        return super.createMapping(key,xValue);
     }
 }

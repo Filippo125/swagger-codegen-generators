@@ -4,11 +4,8 @@ package {{apiPackage}}
 import (
     "net/http"
     "encoding/json"
-{{#hasPathParams}}
-    "github.com/gorilla/mux"
-{{/hasPathParams}}
 {{#imports}}
-    "{{import}}"
+    {{{import}}}
 {{/imports}}
     )
 
