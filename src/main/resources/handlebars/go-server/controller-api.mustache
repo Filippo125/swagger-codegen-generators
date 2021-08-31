@@ -36,12 +36,10 @@ func {{operationId}}Handler(p {{classname}})  http.HandlerFunc {
         {{>requestBodyParams this}}
         {{/contents}}
         statusCode, headers, response := p.{{operationId}}({{#contents}}{{#parameters}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/parameters}}{{/contents}})
-        w.WriteHeader(statusCode)
         w.Header().Set("Content-Type", "application/json; charset=UTF-8")
         for key, value := range headers {
             w.Header().Set(key, value)
         }
-
         if b, err = json.Marshal(response); err != nil {
             {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
             {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
@@ -54,5 +52,6 @@ func {{operationId}}Handler(p {{classname}})  http.HandlerFunc {
             w.WriteHeader(http.StatusInternalServerError)
             return
         }
+        w.WriteHeader(statusCode)
     }
 }{{/operation}}{{/operations}}
