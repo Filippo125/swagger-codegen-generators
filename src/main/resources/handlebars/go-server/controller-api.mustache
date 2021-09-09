@@ -13,7 +13,7 @@ import (
 type {{classname}} interface {
     {{#operation}}
         {{#contents}}
-        {{operationId}}({{#parameters}}{{>queryParams}}{{>pathParams}}{{>headerParams}}{{>bodyParams}}{{>formParams}}{{>cookieParams}}{{#hasMore}},{{/hasMore}}{{/parameters}}) (int, map[string]string,interface{})
+        {{operationId}}({{#parameters}}{{paramName}} {{{dataType}}}{{#hasMore}},{{/hasMore}}{{/parameters}}) (int, map[string]string, interface{})
         {{/contents}}
     {{/operation}}
 }
@@ -31,6 +31,7 @@ func {{operationId}}Handler(p {{classname}})  http.HandlerFunc {
         var {{paramName}} {{dataType}}
         {{/parameters}}
         {{>requestHeaderParams this}}
+        {{>requestFormDataParams this}}
         {{>requestPathParams this}}
         {{>requestQueryParams this}}
         {{>requestBodyParams this}}

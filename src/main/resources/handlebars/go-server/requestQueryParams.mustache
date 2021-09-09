@@ -5,37 +5,45 @@ params := r.URL.Query()
 {{#isString}}
 {{paramName}} = params.Get("{{paramName}}")
 {{/isString}}
+{{#isArray}}
+{{paramName}} = params["{{paramName}}"]
+{{/isArray}}
 {{#isFloat32}}
-    if {{paramName}}, err = strconv.ParseFloat(params.Get("{{paramName}}"), 32); err != nil {
-    log.Errorf(err.Error())
+if {{paramName}}, err = strconv.ParseFloat(params.Get("{{paramName}}"), 32); err != nil {
+    {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
+    {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
     w.WriteHeader(http.StatusBadRequest)
     return
-    }
+}
 {{/isFloat32}}
 {{#isFloat64}}
 if {{paramName}}, err = strconv.ParseFloat(params.Get("{{paramName}}"), 64); err != nil {
-    log.Errorf(err.Error())
+    {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
+    {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
     w.WriteHeader(http.StatusBadRequest)
     return
 }
 {{/isFloat64}}
 {{#isInt32}}
-    if {{paramName}}, err = strconv.ParseInt(params.Get("{{paramName}}"), 10, 32); err != nil {
-    log.Errorf(err.Error())
+if {{paramName}}, err = strconv.ParseInt(params.Get("{{paramName}}"), 10, 32); err != nil {
+    {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
+    {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
     w.WriteHeader(http.StatusBadRequest)
     return
     }
 {{/isInt32}}
 {{#isInt64}}
-    if {{paramName}}, err = strconv.ParseInt(params.Get("{{paramName}}"), 10, 64); err != nil {
-    log.Errorf(err.Error())
+if {{paramName}}, err = strconv.ParseInt(params.Get("{{paramName}}"), 10, 64); err != nil {
+    {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
+    {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
     w.WriteHeader(http.StatusBadRequest)
     return
 }
 {{/isInt64}}
 {{#isBoolean}}
-    if {{paramName}}, err = strconv.ParseBool(params.Get("{{paramName}}"), 10, 64); err != nil {
-    log.Errorf(err.Error())
+if {{paramName}}, err = strconv.ParseBool(params.Get("{{paramName}}"), 10, 64); err != nil {
+    {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
+    {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
     w.WriteHeader(http.StatusBadRequest)
     return
 }

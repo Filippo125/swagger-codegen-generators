@@ -490,9 +490,13 @@ public abstract class AbstractGoCodegen extends DefaultCodegenConfig {
     }
 
     public Map<String, String> createMapping(String key, String value) {
+        // check if import has a package rename, if not add ""
+        String xValue = value;
+        if (!value.contains(" ")){
+            xValue = '"' + value + '"';
+        }
         Map<String, String> customImport = new HashMap<String, String>();
-        customImport.put(key, value);
-
+        customImport.put(key, xValue);
         return customImport;
     }
 

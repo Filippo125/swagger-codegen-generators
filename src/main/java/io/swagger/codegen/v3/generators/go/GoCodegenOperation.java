@@ -7,5 +7,8 @@ public class GoCodegenOperation extends CodegenOperation {
     public boolean hasQueryParams() {
         return !(this.queryParams == null || this.queryParams.isEmpty());
     }
+    public boolean hasFormParams() {
+        return !(this.formParams== null || this.formParams.isEmpty());
+    }
 
 }

@@ -58,7 +58,7 @@ public class GoServerCodegen extends AbstractGoCodegen {
 
         apiTemplateFiles.put(
             "controller.mustache",   // the template to use
-            "Controller.go");       // the extension for each file to write
+            "_controller.go");       // the extension for each file to write
 
         /*
          * Reserved words.  Override this with reserved words specific to your language
@@ -231,6 +231,7 @@ public class GoServerCodegen extends AbstractGoCodegen {
             addClassNames(className.toString());
         }
         List<Map<String, String>> imports = (List<Map<String, String>>) objs.get("imports");
+        List<Map<String, String>> modelImports = new ArrayList<>();
         if (imports != null) {
             imports.clear();
             imports.addAll(commonImports);
@@ -238,14 +239,16 @@ public class GoServerCodegen extends AbstractGoCodegen {
             List<CodegenOperation> operations = (List<CodegenOperation>) objectMap.get("operation");
             boolean addedStrConvImport = false;
             boolean addedMuxImport = false;
+            boolean addedOSImport = false;
             for (CodegenOperation operation : operations) {
                 for (CodegenContent codegenContent : operation.getContents()) {
-                    for (CodegenParameter param : codegenContent.getParameters()) {
+                    for (CodegenParameter xParam : codegenContent.getParameters()) {
+                        GoCodegenParameter param = (GoCodegenParameter) xParam;
                         // import "os" if the operation uses files
                         if (!addedStrConvImport &&
-                            (param.dataType.equals("int32") || param.dataType.equals("int64")
-                                || param.dataType.equals("float32") || param.dataType.equals("float64")
-                                || param.dataType.equals("bool")
+                            (param.getIsInt32() || param.getIsInt64()
+                                || param.getIsFloat32() || param.getIsFloat64()
+                                || param.getIsBoolean()
                             ))
                         {
                             imports.add(createMapping("import", "strconv"));
@@ -255,9 +258,15 @@ public class GoServerCodegen extends AbstractGoCodegen {
                             imports.add(createMapping("import","github.com/gorilla/mux"));
                             addedMuxImport = true;
                         }
+                        if (!addedOSImport && param.getIsFile()){
+                            imports.add(createMapping("import","os"));
+                            modelImports.add(createMapping("import","os"));
+                            addedOSImport = true;
+                        }
                     }
                 }
             }
+            objs.put("modelImports",modelImports);
         }
         return objs;
     }
@@ -265,14 +274,5 @@ public class GoServerCodegen extends AbstractGoCodegen {
 
     private void addClassNames(String classname) {
         this.classNamesDict.add(classname);
-    }
-
-    // check if import has a package rename, if not add ""
-    public Map<String, String> createMapping(String key, String value) {
-        String xValue = value;
-        if (!value.contains(" ")){
-            xValue = '"' + value + '"';
-        }
-        return super.createMapping(key,xValue);
     }
 }

@@ -5,40 +5,44 @@
 {{/isString}}
 {{#isFloat32}}
 if {{paramName}}, err = strconv.ParseFloat(r.Header.Get("{{paramName}}"), 32); err != nil {
-    log.Errorf(err.Error())
+    {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
+    {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
     w.WriteHeader(http.StatusBadRequest)
     return
 }
 {{/isFloat32}}
 {{#isFloat64}}
 if {{paramName}}, err = strconv.ParseFloat(r.Header.Get("{{paramName}}"), 64); err != nil {
-    log.Errorf(err.Error())
+    {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
+    {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
     w.WriteHeader(http.StatusBadRequest)
     return
 }
 {{/isFloat64}}
 {{#isInt32}}
 if {{paramName}}, err = strconv.ParseInt(r.Header.Get("{{paramName}}"), 10, 32); err != nil {
-    log.Errorf(err.Error())
+    {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
+    {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
     w.WriteHeader(http.StatusBadRequest)
     return
 }
 {{/isInt32}}
 {{#isInt64}}
 if {{paramName}}, err = strconv.ParseInt(r.Header.Get("{{paramName}}"), 10, 64); err != nil {
-    log.Errorf(err.Error())
+    {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
+    {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
     w.WriteHeader(http.StatusBadRequest)
     return
 }
 {{/isInt64}}
 {{#isBoolean}}
 if {{paramName}}, err = strconv.ParseBool(r.Header.Get("{{paramName}}"), 10, 64); err != nil {
-    log.Errorf(err.Error())
+    {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
+    {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
     w.WriteHeader(http.StatusBadRequest)
     return
 }
 {{/isBoolean}}
-
 {{/isHeaderParam}}
 {{/parameters}}
 

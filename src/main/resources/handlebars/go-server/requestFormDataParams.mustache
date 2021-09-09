@@ -1,20 +1,20 @@
-{{#hasPathParams}}
-pathParams := mux.Vars(r)
+{{#hasFormParams}}
+r.ParseForm()
 {{#parameters}}
-{{#isPathParam}}
+{{#isFormParam}}
 {{#isString}}
-{{paramName}} = pathParams["{{paramName}}"]
+{{paramName}} = r.FormValue("{{paramName}}")
 {{/isString}}
 {{#isFloat32}}
-if {{paramName}}, err = strconv.ParseFloat(pathParams["{{paramName}}"], 32); err != nil {
+    if {{paramName}}, err = strconv.ParseFloat(r.FormValue("{{paramName}}"), 32); err != nil {
     {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
     {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
     w.WriteHeader(http.StatusBadRequest)
     return
-}
+    }
 {{/isFloat32}}
 {{#isFloat64}}
-if {{paramName}}, err = strconv.ParseFloat(pathParams["{{paramName}}"], 64); err != nil {
+if {{paramName}}, err = strconv.ParseFloat(r.FormValue("{{paramName}}"), 64); err != nil {
     {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
     {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
     w.WriteHeader(http.StatusBadRequest)
@@ -22,15 +22,15 @@ if {{paramName}}, err = strconv.ParseFloat(pathParams["{{paramName}}"], 64); err
 }
 {{/isFloat64}}
 {{#isInt32}}
-if {{paramName}}, err = strconv.ParseInt(pathParams["{{paramName}}"], 10, 32); err != nil {
+    if {{paramName}}, err = strconv.ParseInt(r.FormValue("{{paramName}}"), 10, 32); err != nil {
     {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
     {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
     w.WriteHeader(http.StatusBadRequest)
     return
-}
+    }
 {{/isInt32}}
 {{#isInt64}}
-if {{paramName}}, err = strconv.ParseInt(pathParams["{{paramName}}"], 10, 64); err != nil {
+    if {{paramName}}, err = strconv.ParseInt(r.FormValue("{{paramName}}"), 10, 64); err != nil {
     {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
     {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
     w.WriteHeader(http.StatusBadRequest)
@@ -38,13 +38,13 @@ if {{paramName}}, err = strconv.ParseInt(pathParams["{{paramName}}"], 10, 64); e
 }
 {{/isInt64}}
 {{#isBoolean}}
-if {{paramName}}, err = strconv.ParseBool(pathParams["{{paramName}}"], 10, 64); err != nil {
+    if {{paramName}}, err = strconv.ParseBool(r.FormValue("{{paramName}}"), 10, 64); err != nil {
     {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
     {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
     w.WriteHeader(http.StatusBadRequest)
     return
 }
 {{/isBoolean}}
-{{/isPathParam}}
+{{/isFormParam}}
 {{/parameters}}
-{{/hasPathParams}}
+{{/hasFormParams}}

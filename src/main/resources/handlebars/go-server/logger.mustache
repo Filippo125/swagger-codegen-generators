@@ -3,7 +3,7 @@ package {{packageName}}
 
 import (
     {{#useLogrus}}log "github.com/sirupsen/logrus"{{/useLogrus}}
-    {{^useLogrus}}"log"({{/useLogrus}}
+    {{^useLogrus}}"log"{{/useLogrus}}
     "net/http"
     "time"
 )
