@@ -3,7 +3,10 @@ package main
 
 import (
 	"net/http"
-    "log"
+	"github.com/gorilla/mux"
+    {{#useLogrus}}log "github.com/sirupsen/logrus"{{/useLogrus}}
+    {{^useLogrus}}"log"{{/useLogrus}}
+
     sw "{{packageName}}/{{packageName}}"
 )
 var (
@@ -15,8 +18,8 @@ var (
 
 func main() {
 	log.Printf("Server started")
-
-router := sw.NewRouter({{#classNames}}emptyImp{{this}}, {{/classNames}})
+	router := mux.NewRouter().StrictSlash(true)
+    sw.AddApi(router,{{#classNames}}emptyImp{{this}}, {{/classNames}})
 
 	log.Fatal(http.ListenAndServe(":{{serverPort}}", router))
 }

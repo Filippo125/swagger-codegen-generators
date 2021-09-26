@@ -2,7 +2,6 @@
 package {{packageName}}
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 	"github.com/gorilla/mux"
@@ -18,19 +17,9 @@ type Route struct {
 type Routes []Route
 
 
-func Index(w http.ResponseWriter, r *http.Request) {
-fmt.Fprintf(w, "Hello World!")
-}
-
-func NewRouter({{#classNames}}imp{{this}} {{this}}, {{/classNames}}) *mux.Router {
-	router := mux.NewRouter().StrictSlash(true)
+func AddApi(router *mux.Router, {{#classNames}}imp{{this}} {{this}}, {{/classNames}}){
     var routes = Routes{
-    Route{
-    "Index",
-    "GET",
-    "{{{basePathWithoutHost}}}/",
-    Index,
-    },{{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}
+   {{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}
 
         Route{
         "{{operationId}}",
@@ -50,8 +39,6 @@ func NewRouter({{#classNames}}imp{{this}} {{this}}, {{/classNames}}) *mux.Router
 			Name(route.Name).
 			Handler(handler)
 	}
-
-	return router
 }
 
 
