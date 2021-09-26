@@ -48,6 +48,14 @@ if {{paramName}}, err = strconv.ParseBool(params.Get("{{paramName}}"), 10, 64); 
     return
 }
 {{/isBoolean}}
+{{#isDateTime}}
+if {{paramName}}, err = time.Parse(time.RFC3339, params.Get("{{paramName}}"); err != nil {
+{{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
+{{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
+w.WriteHeader(http.StatusBadRequest)
+return
+}
+{{/isDateTime}}
 {{/isQueryParam}}
 {{/parameters}}
 {{/hasQueryParams}}

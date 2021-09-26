@@ -4,6 +4,7 @@ package {{apiPackage}}
 import (
     "net/http"
     "encoding/json"
+    "context"
 {{#imports}}
     {{{import}}}
 {{/imports}}
@@ -13,7 +14,7 @@ import (
 type {{classname}} interface {
     {{#operation}}
         {{#contents}}
-        {{operationId}}({{#parameters}}{{paramName}} {{{dataType}}}{{#hasMore}},{{/hasMore}}{{/parameters}}) (int, map[string]string, interface{})
+        {{operationId}}(ctx context.Context, {{#parameters}}{{paramName}} {{{dataType}}}{{#hasMore}},{{/hasMore}}{{/parameters}}) (int, map[string]string, interface{})
         {{/contents}}
     {{/operation}}
 }
@@ -26,17 +27,20 @@ func {{operationId}}Handler(p {{classname}})  http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         var b []byte
         var err error
+        // Define variables
         {{#contents}}
         {{#parameters}}
         var {{paramName}} {{dataType}}
         {{/parameters}}
+        // Handle variables
         {{>requestHeaderParams this}}
         {{>requestFormDataParams this}}
         {{>requestPathParams this}}
         {{>requestQueryParams this}}
         {{>requestBodyParams this}}
         {{/contents}}
-        statusCode, headers, response := p.{{operationId}}({{#contents}}{{#parameters}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/parameters}}{{/contents}})
+        // Call controller
+        statusCode, headers, response := p.{{operationId}}(r.Context(), {{#contents}}{{#parameters}}{{paramName}}{{#hasMore}}, {{/hasMore}}{{/parameters}}{{/contents}})
         w.Header().Set("Content-Type", "application/json; charset=UTF-8")
         for key, value := range headers {
             w.Header().Set(key, value)

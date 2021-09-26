@@ -34,7 +34,9 @@ public class GoCodegenParameter extends CodegenParameter {
     public Boolean getIsFile() {
         return this.dataType.equalsIgnoreCase("*os.File");
     }
-
+    public Boolean getIsTime() {
+        return this.dataType.equalsIgnoreCase("*os.File");
+    }
     public Boolean getIsArray() {
         return this.dataType.startsWith("[]");
     }

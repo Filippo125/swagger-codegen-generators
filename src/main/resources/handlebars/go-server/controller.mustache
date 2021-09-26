@@ -1,7 +1,9 @@
 {{>partial_header}}
 package {{packageName}}
 
-import ({{#modelImports}}
+import (
+    "context"
+{{#modelImports}}
     {{{import}}}
 {{/modelImports}})
 
@@ -10,7 +12,7 @@ type Imp{{classname}} struct {
 }
 {{#operation}}
 {{#contents}}
-func (t Imp{{classname}}) {{operationId}}({{#parameters}}{{paramName}} {{{dataType}}}{{#hasMore}},{{/hasMore}}{{/parameters}})  (int, map[string]string, interface{}){
+func (t Imp{{classname}}) {{operationId}}(ctx context.Context,{{#parameters}}{{paramName}} {{{dataType}}}{{#hasMore}},{{/hasMore}}{{/parameters}})  (int, map[string]string, interface{}){
     return 501, nil, nil
 }
 {{/contents}}
