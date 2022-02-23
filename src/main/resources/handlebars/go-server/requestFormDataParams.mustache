@@ -6,12 +6,14 @@ r.ParseForm()
 {{paramName}} = r.FormValue("{{paramName}}")
 {{/isString}}
 {{#isFloat32}}
-    if {{paramName}}, err = strconv.ParseFloat(r.FormValue("{{paramName}}"), 32); err != nil {
+var {{paramName}}64
+if {{paramName}}64, err = strconv.ParseFloat(r.FormValue("{{paramName}}"), 32); err != nil {
     {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
     {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
     w.WriteHeader(http.StatusBadRequest)
     return
     }
+{paramName}} = float32({{paramName}}64)
 {{/isFloat32}}
 {{#isFloat64}}
 if {{paramName}}, err = strconv.ParseFloat(r.FormValue("{{paramName}}"), 64); err != nil {
@@ -22,12 +24,14 @@ if {{paramName}}, err = strconv.ParseFloat(r.FormValue("{{paramName}}"), 64); er
 }
 {{/isFloat64}}
 {{#isInt32}}
-    if {{paramName}}, err = strconv.ParseInt(r.FormValue("{{paramName}}"), 10, 32); err != nil {
+var {{paramName}}64
+if {{paramName}}64, err = strconv.ParseInt(r.FormValue("{{paramName}}"), 10, 32); err != nil {
     {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
     {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
     w.WriteHeader(http.StatusBadRequest)
     return
     }
+{paramName}} = int32({{paramName}}64)
 {{/isInt32}}
 {{#isInt64}}
     if {{paramName}}, err = strconv.ParseInt(r.FormValue("{{paramName}}"), 10, 64); err != nil {
