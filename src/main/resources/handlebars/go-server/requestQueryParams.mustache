@@ -9,7 +9,7 @@ params := r.URL.Query()
 {{paramName}} = params["{{paramName}}"]
 {{/isArray}}
 {{#isFloat32}}
-var {{paramName}}64
+var {{paramName}}64 float64
 if {{paramName}}64, err = strconv.ParseFloat(params.Get("{{paramName}}"), 32); err != nil {
     {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
     {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
@@ -27,14 +27,14 @@ if {{paramName}}, err = strconv.ParseFloat(params.Get("{{paramName}}"), 64); err
 }
 {{/isFloat64}}
 {{#isInt32}}
-var {{paramName}}64
+var {{paramName}}64 int64
 if {{paramName}}64, err = strconv.ParseInt(params.Get("{{paramName}}"), 10, 32); err != nil {
     {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
     {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
     w.WriteHeader(http.StatusBadRequest)
     return
     }
-{paramName}} = int32({{paramName}}64)
+{{paramName}} = int32({{paramName}}64)
 {{/isInt32}}
 {{#isInt64}}
 if {{paramName}}, err = strconv.ParseInt(params.Get("{{paramName}}"), 10, 64); err != nil {

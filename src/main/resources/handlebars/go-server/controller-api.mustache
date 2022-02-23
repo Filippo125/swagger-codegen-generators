@@ -51,12 +51,12 @@ func {{operationId}}Handler(p {{classname}})  http.HandlerFunc {
             w.WriteHeader(http.StatusInternalServerError)
             return
         }
+        w.WriteHeader(statusCode)
         if _, err = w.Write(b); err != nil {
             {{#useLogrus}}log.Errorf(err.Error()){{/useLogrus}}
             {{^useLogrus}}log.Printf(err.Error()){{/useLogrus}}
             w.WriteHeader(http.StatusInternalServerError)
             return
         }
-        w.WriteHeader(statusCode)
     }
 }{{/operation}}{{/operations}}
