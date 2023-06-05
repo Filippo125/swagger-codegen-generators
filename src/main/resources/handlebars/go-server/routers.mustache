@@ -11,35 +11,54 @@ type Route struct {
 	Name        string
 	Method      string
 	Pattern     string
-	HandlerFunc http.HandlerFunc
 }
 
-type Routes []Route
+type Routes map[string]Route
+type RouteHandlers map[string]http.HandlerFunc
 
-
-func AddApi(router *mux.Router, {{#classNames}}imp{{this}} {{this}}, {{/classNames}}){
-    var routes = Routes{
-   {{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}
-
-        Route{
+var routes = Routes{
+{{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}
+    "{{operationId}}": Route{
         "{{operationId}}",
         strings.ToUpper("{{httpMethod}}"),
-        "{{{basePathWithoutHost}}}{{{path}}}",
-        {{operationId}}Handler(imp{{classname}}),
-        },{{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}
-    }
-	for _, route := range routes {
-		var handler http.Handler
-		handler = route.HandlerFunc
-		handler = Logger(handler, route.Name)
+        "{{{basePathWithoutHost}}}{{{path}}}",},
 
-		router.
+{{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}
+}
+
+func AddApiHandler(router *mux.Router, preHandles []PreHandlerFunc, {{#classNames}}imp{{this}} {{this}}, {{/classNames}}){
+    var mappedRoutes = RouteHandlers{
+   {{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}
+        "{{operationId}}": {{operationId}}Handler(imp{{classname}}),
+   {{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}
+    }
+	for key, handler := range mappedRoutes {
+        route := routes[key]
+        var handy http.Handler
+        if len(preHandles) > 0 {
+            handy = preHandles[0](handler, route.Name)
+            for _, p := range preHandles[1:] {
+            handy = p(handy, route.Name)
+            }
+        } else {
+            handy = handler
+        }
+
+        router.
 			Methods(route.Method).
 			Path(route.Pattern).
 			Name(route.Name).
-			Handler(handler)
+			Handler(handy)
 	}
 }
 
+func AddApi(router *mux.Router, {{#classNames}}imp{{this}} {{this}}, {{/classNames}}){
+    preHandles := []PreHandlerFunc{Logger}
+    AddApiHandler(router, preHandles, {{#classNames}}imp{{this}}, {{/classNames}})
+}
 
+// GetRoutes returns the list of routes mapped
+func GetRoutes() Routes {
+    return routes
+}
 

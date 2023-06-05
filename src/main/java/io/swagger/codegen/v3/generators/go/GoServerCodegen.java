@@ -81,8 +81,8 @@ public class GoServerCodegen extends AbstractGoCodegen {
         additionalProperties.put("classNames",this.classNamesDict);
         cliOptions.add(CliOption.newBoolean(USE_LOGRUS, "Use sirupsen logrus library for logging instead of built-in library").defaultValue("false"));
         cliOptions.add(CliOption.newString(MAIN_APPLICATION_FOLDER, "Use to customize the main application folder"));
-        modelPackage = packageName; //"models";
-        apiPackage = packageName;
+        //modelPackage = packageName; //"models";
+        //apiPackage = packageName;
     }
 
     @Override
@@ -106,6 +106,22 @@ public class GoServerCodegen extends AbstractGoCodegen {
         else {
             setPackageName("swagger");
         }
+
+        if (additionalProperties.containsKey(CodegenConstants.API_PACKAGE)) {
+            setApiPackage((String) additionalProperties.get(CodegenConstants.API_PACKAGE));
+        }
+        else {
+            setApiPackage(packageName);
+        }
+
+        if (additionalProperties.containsKey(CodegenConstants.MODEL_PACKAGE)) {
+            setModelPackage((String) additionalProperties.get(CodegenConstants.MODEL_PACKAGE));
+        }
+        else {
+            setModelPackage(packageName);
+        }
+
+
         boolean useLogrus = Boolean.parseBoolean((String)additionalProperties.get(USE_LOGRUS));
         if (useLogrus) {
             commonImports.add(createMapping("import","log  \"github.com/sirupsen/logrus\""));
@@ -124,6 +140,7 @@ public class GoServerCodegen extends AbstractGoCodegen {
         additionalProperties.put("apiVersion", apiVersion);
         additionalProperties.put("serverPort", serverPort);
         additionalProperties.put("apiPath", apiPath);
+
         additionalProperties.put(CodegenConstants.PACKAGE_NAME, packageName);
         //additionalProperties.put("swaggerPackage", "sw "+'"'+ packageName + "/" + packageName + '"');
         additionalProperties.put("commonImports", commonImports);
@@ -143,10 +160,6 @@ public class GoServerCodegen extends AbstractGoCodegen {
         writeOptional(outputFolder, new SupportingFile("README.mustache", apiPath, "README.md"));
     }
 
-    @Override
-    public String apiPackage() {
-        return apiPath;
-    }
 
     /**
      * Configures the type of generator.
@@ -195,14 +208,22 @@ public class GoServerCodegen extends AbstractGoCodegen {
     public String apiFileFolder() {
         // to separate models in a specific package add it, but there is a template to be changed
         //  +   File.separator + packageName;
-        return basePackageFileFolder() + File.separator + packageName;
+        if (this.apiHasOwnPackage()) {
+            return basePackageFileFolder() + File.separator + apiPackage;
+        }
+        return basePackageFileFolder() + File.separator + modelPackage;
+
     }
 
     @Override
     public String modelFileFolder() {
         // to separate models in a specific package add it, but there is a template to be changed
         // +  File.separator + modelPackage;
+        if (this.modelHasOwnPackage()) {
+            return basePackageFileFolder() + File.separator + modelPackage;
+        }
         return basePackageFileFolder() + File.separator + packageName;
+
     }
 
     public String mainFileFolder() {
@@ -215,11 +236,11 @@ public class GoServerCodegen extends AbstractGoCodegen {
 
 
     private String baseSupportFileFolder() {
-        return apiPackage().replace('.', File.separatorChar);
+        return packageName.replace('.', File.separatorChar);
     }
 
     private String basePackageFileFolder() {
-        return outputFolder + File.separator + apiPackage().replace('.', File.separatorChar);
+        return outputFolder + File.separator + "pkg".replace('.', File.separatorChar);
     }
 
     @Override
@@ -240,6 +261,8 @@ public class GoServerCodegen extends AbstractGoCodegen {
             boolean addedStrConvImport = false;
             boolean addedMuxImport = false;
             boolean addedOSImport = false;
+            boolean addedModelImport = false;
+
             for (CodegenOperation operation : operations) {
                 for (CodegenContent codegenContent : operation.getContents()) {
                     for (CodegenParameter xParam : codegenContent.getParameters()) {
@@ -263,6 +286,13 @@ public class GoServerCodegen extends AbstractGoCodegen {
                             modelImports.add(createMapping("import","os"));
                             addedOSImport = true;
                         }
+                         if (this.modelHasOwnPackage()){
+                            param.baseType = this.modelPackage() +  "." + param.baseType;
+                            if (!addedModelImport) {
+                                modelImports.add(createMapping("import",this.modelPackage()));
+                                addedModelImport = true;
+                            }
+                        }
                     }
                 }
             }
@@ -274,5 +304,13 @@ public class GoServerCodegen extends AbstractGoCodegen {
 
     private void addClassNames(String classname) {
         this.classNamesDict.add(classname);
+    }
+
+    protected boolean apiHasOwnPackage() {
+        return !this.packageName.equalsIgnoreCase(this.apiPackage);
+    }
+
+    protected boolean modelHasOwnPackage() {
+        return !this.packageName.equalsIgnoreCase(this.modelPackage);
     }
 }
